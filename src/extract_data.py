@@ -44,14 +44,15 @@ def extract_prices(periodStart, periodEnd):
         return pd.DataFrame()
 
 def get_conso_in_31_jours():
-    # date de début il y a 31 jours
+    
     date_end = datetime.today().date()
     date_start = date_end - timedelta(days=31)
     # format ISO pour la requête
     start_str = date_start.isoformat()
     end_str = date_end.isoformat()
+
     
-    # URL de base de l’API
+    # URL de base de l'API
     base_url = "https://data.enedis.fr/api/explore/v2.1/catalog/datasets/conso-inf36-region/records"
     params = {
         "dataset": "conso-inf36-region",
@@ -59,25 +60,59 @@ def get_conso_in_31_jours():
         "rows": 1000  # nombre de résultats max (à ajuster)
     }
     
-    resp = requests.get(base_url, params=params)
-    resp.raise_for_status()
-    data = resp.json()
+    try:
+        resp = requests.get(base_url, params=params)
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP Error: {e}")
+        print(f"Response content: {resp.text}")
+        return None
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        return None
     
-    # extraire les valeurs de consommation dans les “records”
+    # extraire les valeurs de consommation dans les "records"
     valeurs = []
-    for rec in data.get("records", []):
+    records = data.get("records", [])
+    print(f"Found {len(records)} records")
+    
+    if not records:
+        print("No records found in API response")
+        return None
+    
+    # Debug: print the first record to understand the structure
+    if records:
+        print("Sample record structure:")
+        print(records[0])
+    
+    for rec in records:
         fields = rec.get("fields", {})
-        # supposons que le champ de consommation s’appelle “conso” ou “volume” — à adapter
-        if "conso" in fields:
-            valeurs.append(fields["conso"])
-        elif "volume" in fields:
-            valeurs.append(fields["volume"])
+        # Chercher différents champs possibles pour la consommation
+        consumption_fields = ["conso", "volume", "consommation", "value", "valeur"]
+        found_value = None
+        
+        for field in consumption_fields:
+            if field in fields:
+                found_value = fields[field]
+                break
+        
+        if found_value is not None:
+            try:
+                # Convertir en float si possible
+                valeur = float(found_value)
+                valeurs.append(valeur)
+            except (ValueError, TypeError):
+                print(f"Could not convert value to float: {found_value}")
+                continue
     
     if not valeurs:
+        print("No valid consumption values found")
         return None
     
     # moyenne
     moyenne = sum(valeurs) / len(valeurs)
+    print(f"Calculated average from {len(valeurs)} values: {moyenne:.2f}")
     return moyenne
 
 
