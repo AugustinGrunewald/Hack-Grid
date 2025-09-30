@@ -15,4 +15,4 @@ Une transformation -> on trouve le prix de consommation sans optimisation (prix 
 Mettre en place l'optimisation -> prix de la batterie, achat de l'électricité à différent moment, comparer les prix pour une même quantité consommée
 
 #### Step 3 - Load
-Faire une BD -> chaque ligne correspond à un jour contenant le prix optimisé et non optimisé
+Faire une BD -> chaque ligne correspond à un jour contenant le prix optimisé, non optimisé et le volume consommé
