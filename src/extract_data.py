@@ -43,11 +43,59 @@ def extract_prices(periodStart, periodEnd):
         print(f":x: Error processing price data: {e}")
         return pd.DataFrame()
 
+def get_conso_in_31_jours():
+    # date de début il y a 31 jours
+    date_end = datetime.today().date()
+    date_start = date_end - timedelta(days=31)
+    # format ISO pour la requête
+    start_str = date_start.isoformat()
+    end_str = date_end.isoformat()
+    
+    # URL de base de l’API
+    base_url = "https://data.enedis.fr/api/records/1.0/search/"
+    base_url = "https://data.enedis.fr/api/explore/v2.1/catalog/datasets/conso-inf36-region/records"
+    params = {
+        "dataset": "conso-inf36-region",
+        "q": "",  # pas de filtre général
+        # on filtre sur le champ de date (nom hypothétique “date”) ; à ajuster selon la vraie structure
+        "where": f"date >= '{start_str}' AND date <= '{end_str}'",
+        "rows": 1000  # nombre de résultats max (à ajuster)
+    }
+    
+    resp = requests.get(base_url, params=params)
+    resp.raise_for_status()
+    data = resp.json()
+    
+    # extraire les valeurs de consommation dans les “records”
+    valeurs = []
+    for rec in data.get("records", []):
+        fields = rec.get("fields", {})
+        # supposons que le champ de consommation s’appelle “conso” ou “volume” — à adapter
+        if "conso" in fields:
+            valeurs.append(fields["conso"])
+        elif "volume" in fields:
+            valeurs.append(fields["volume"])
+    
+    if not valeurs:
+        return None
+    
+    # moyenne
+    moyenne = sum(valeurs) / len(valeurs)
+    return moyenne
 
 
 if __name__ == "__main__":
+
+    print("deuxième fonction")
+
+    moyenne = get_conso_in_31_jours()
+    if moyenne is None:
+        print("Aucune donnée récupérée.")
+    else:
+        print(f"Consommation moyenne sur les 31 derniers jours : {moyenne:.2f}")
     
-    # Test fonction réelle (échouera sans API key)
+    print("première fonction")
+
     result = extract_prices("202401150000", "202401160000")
     print(f"API test: {'OK' if not result.empty else 'Échec (normal sans clé API)'}")
         
