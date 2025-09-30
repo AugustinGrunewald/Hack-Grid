@@ -52,12 +52,9 @@ def get_conso_in_31_jours():
     end_str = date_end.isoformat()
     
     # URL de base de l’API
-    base_url = "https://data.enedis.fr/api/records/1.0/search/"
     base_url = "https://data.enedis.fr/api/explore/v2.1/catalog/datasets/conso-inf36-region/records"
     params = {
         "dataset": "conso-inf36-region",
-        "q": "",  # pas de filtre général
-        # on filtre sur le champ de date (nom hypothétique “date”) ; à ajuster selon la vraie structure
         "where": f"date >= '{start_str}' AND date <= '{end_str}'",
         "rows": 1000  # nombre de résultats max (à ajuster)
     }
