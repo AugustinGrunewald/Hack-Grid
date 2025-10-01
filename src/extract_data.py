@@ -2,46 +2,81 @@ import requests
 import pandas as pd
 import xmltodict
 from datetime import datetime, timedelta
+# https://web-api.tp.entsoe.eu/api?securityToken=b21fd0b5-a6b2-45b4-add3-70bb610259c5&documentType=A44&processType=A01&in_Domain=10YFR-RTE------C&out_Domain=10YFR-RTE------C&periodStart=202301010000&periodEnd=202312310000
+# https://web-api.tp.entsoe.eu/api?securityToken=b21fd0b5-a6b2-45b4-add3-70bb610259c5documentType=A44&processType=A01&out_Domain=10YFR-RTE------C&in_Domain=10YFR-RTE------C&periodStart=202401150000&periodEnd=202401160000
+token = 'b21fd0b5-a6b2-45b4-add3-70bb610259c5'
 
-def extract_prices(periodStart, periodEnd):
+def extract_prices(periodStart, periodEnd, token):
     print("Fetching live prices data from ENTSO-E API...")
     in_Domain = "10YFR-RTE------C"
     out_Domain = "10YFR-RTE------C"
     url = (
-        f"https://web-api.tp.entsoe.eu/api?"
-        f"documentType=A44&periodStart={periodStart}&periodEnd={periodEnd}"
-        f"&out_Domain={out_Domain}&in_Domain={in_Domain}"
-        f"&securityToken=YOUR_API_KEY"
+        f"https://web-api.tp.entsoe.eu/api?securityToken={token}"
+        f"&documentType=A44&processType=A01"
+        f"&out_Domain={out_Domain}&in_Domain={in_Domain}&periodStart={periodStart}&periodEnd={periodEnd}"
     )
     try:
-        response = requests.get(url)
+        response = requests.get(url=url,
+                headers={'Content-Type': 'application/xml', 'SECURITY_TOKEN': token},
+                timeout=30,
+                verify=True)
         if response.status_code != 200:
             print(f":danger: API returned status code {response.status_code}")
             return pd.DataFrame()
         # Convertir XML -> dict
-        data = xmltodict.parse(response.content)
-        # Naviguer dans la structure
-        period = data["Publication_MarketDocument"]["TimeSeries"]["Period"]
-        start_time = datetime.fromisoformat(period["timeInterval"]["start"].replace("Z", "+00:00"))
-        resolution = period["resolution"]  # ex "PT15M"
-        step = int(resolution.replace("PT", "").replace("M", ""))
-        # Extraire les points
-        points = period["Point"]
-        if isinstance(points, dict):  # cas 1 seul point
-            points = [points]
-        times, prices = [], []
-        for p in points:
-            pos = int(p["position"])
-            price = float(p["price.amount"])
-            timestamp = start_time + timedelta(minutes=(pos - 1) * step)
-            times.append(timestamp)
-            prices.append(price)
-        df = pd.DataFrame({"time": times, "price": prices})
-        print(f":coche_blanche: Extracted {len(df)} price points")
-        return df
+        r_json = xmltodict.parse(response.content)
+
+        time_series = r_json['Publication_MarketDocument']['TimeSeries']
+
+        for series in time_series:
+            start_date = series['Period']['timeInterval']['start']
+            dt1 = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+            end_date = series['Period']['timeInterval']['end']
+            dt2 = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+        currency = series["currency_Unit.name"]
+
+        dt = pd.date_range(
+            start=dt1,
+            end=dt2 - timedelta(minutes=60),
+            freq=f'{60}min'
+        )
+        # print(dt)
+        prices_col = [float('nan')] * len(dt)
+
+        for val in series['Period']['Point']:
+            xml_pos = int(val['position'])
+            price = float(val['price.amount'])
+            prices_col[xml_pos-1] = price
+
+        df_c = pd.DataFrame({
+            f'spot_price': prices_col,
+            f'currency_unit': [currency] * len(prices_col)
+        }, index=pd.Index(dt, name='time'))
+        df_to_csv(df=df_c, output_path="./data", start=periodStart, end=periodEnd)
+    # if not isinstance(time_series, list):
+    #     time_series = [time_series]
+    #     for val in series['Period']['Point']:
+    #         xml_pos = int(val['position'])
+    #     # Naviguer dans la structure
+    #     period = data["Publication_MarketDocument"]["TimeSeries"]["Period"]
+    #     start_time = datetime.fromisoformat(period["timeInterval"]["start"].replace("Z", "+00:00"))
+    #     resolution = period["resolution"]  # ex "PT15M"
+    #     step = int(resolution.replace("PT", "").replace("M", ""))
+    #     # Extraire les points
+    #     points = period["Point"]
+    #     if isinstance(points, dict):  # cas 1 seul point
+    #         points = [points]
+    #     times, prices = [], []
+    #     for p in points:
+    #         pos = int(p["position"])
+    #         price = float(p["price.amount"])
+    #         timestamp = start_time + timedelta(minutes=(pos - 1) * step)
+    #         times.append(timestamp)
+    #         prices.append(price)
+    #     df = pd.DataFrame({"time": times, "price": prices})
+    #     print(f":coche_blanche: Extracted {len(df)} price points")
     except Exception as e:
         print(f":x: Error processing price data: {e}")
-        return pd.DataFrame()
 
 def get_conso_in_31_jours():
     
@@ -115,19 +150,28 @@ def get_conso_in_31_jours():
     print(f"Calculated average from {len(valeurs)} values: {moyenne:.2f}")
     return moyenne
 
+def df_to_csv(df, output_path, start, end):
+    """
+    Sauvegarde le DataFrame au format CSV.
+    """
+    name = f"SPOT_prices_{start}_{end}"
+    filepath = f"{output_path}/{name}.csv"
+    df.to_csv(filepath)
+    print(f"[INFO] Fichier CSV enregistré : {filepath}")
 
 if __name__ == "__main__":
 
-    print("deuxième fonction")
+    # print("deuxième fonction")
 
-    moyenne = get_conso_in_31_jours()
-    if moyenne is None:
-        print("Aucune donnée récupérée.")
-    else:
-        print(f"Consommation moyenne sur les 31 derniers jours : {moyenne:.2f}")
+    # moyenne = get_conso_in_31_jours()
+    # if moyenne is None:
+    #     print("Aucune donnée récupérée.")
+    # else:
+    #     print(f"Consommation moyenne sur les 31 derniers jours : {moyenne:.2f}")
     
     print("première fonction")
 
-    result = extract_prices("202401150000", "202401160000")
-    print(f"API test: {'OK' if not result.empty else 'Échec (normal sans clé API)'}")
+    result = extract_prices("202501150000", "202501170000", token)
+    # print(f"API test: {'OK' if not result.empty else 'Échec'}")
+
         
