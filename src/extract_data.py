@@ -18,7 +18,6 @@ def extract_prices(periodStart, periodEnd, token):
     try:
         response = requests.get(url=url,
                 headers={'Content-Type': 'application/xml', 'SECURITY_TOKEN': token},
-                timeout=30,
                 verify=True)
         if response.status_code != 200:
             print(f":danger: API returned status code {response.status_code}")
@@ -172,7 +171,7 @@ if __name__ == "__main__":
     
     print("première fonction")
 
-    result = extract_prices("202501150000", "202501200000", token)
+    result = extract_prices("202509010000", "202510020000", token)
     # print(f"API test: {'OK' if not result.empty else 'Échec'}")
 
         
