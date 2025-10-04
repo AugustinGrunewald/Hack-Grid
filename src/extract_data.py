@@ -27,32 +27,33 @@ def extract_prices(periodStart, periodEnd, token):
         r_json = xmltodict.parse(response.content)
 
         time_series = r_json['Publication_MarketDocument']['TimeSeries']
-
+        list_of_df =[]
         for series in time_series:
             start_date = series['Period']['timeInterval']['start']
             dt1 = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
             end_date = series['Period']['timeInterval']['end']
             dt2 = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
-        currency = series["currency_Unit.name"]
+            currency = series["currency_Unit.name"]
 
-        dt = pd.date_range(
-            start=dt1,
-            end=dt2 - timedelta(minutes=60),
-            freq=f'{60}min'
-        )
-        # print(dt)
-        prices_col = [float('nan')] * len(dt)
+            dt = pd.date_range(
+                start=dt1,
+                end=dt2 - timedelta(minutes=60),
+                freq=f'{60}min'
+                )
+            # print(dt)
+            prices_col = [float('nan')] * len(dt)
 
-        for val in series['Period']['Point']:
-            xml_pos = int(val['position'])
-            price = float(val['price.amount'])
-            prices_col[xml_pos-1] = price
-
-        df_c = pd.DataFrame({
-            f'spot_price': prices_col,
-            f'currency_unit': [currency] * len(prices_col)
-        }, index=pd.Index(dt, name='time'))
-        df_to_csv(df=df_c, output_path="./data", start=periodStart, end=periodEnd)
+            for val in series['Period']['Point']:
+                xml_pos = int(val['position'])
+                price = float(val['price.amount'])
+                prices_col[xml_pos-1] = price
+            df_c = pd.DataFrame({
+                f'spot_price': prices_col,
+                f'currency_unit': [currency] * len(prices_col)
+            }, index=pd.Index(dt, name='time'))
+            list_of_df.append(df_c)
+        df_total = pd.concat(df_c for df_c in list_of_df)
+        df_to_csv(df=df_total, output_path="./data", start=periodStart, end=periodEnd)
     # if not isinstance(time_series, list):
     #     time_series = [time_series]
     #     for val in series['Period']['Point']:
@@ -171,7 +172,7 @@ if __name__ == "__main__":
     
     print("première fonction")
 
-    result = extract_prices("202501150000", "202501170000", token)
+    result = extract_prices("202501150000", "202501200000", token)
     # print(f"API test: {'OK' if not result.empty else 'Échec'}")
 
         
