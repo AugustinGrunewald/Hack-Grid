@@ -16,3 +16,20 @@ Mettre en place l'optimisation -> prix de la batterie, achat de l'électricité 
 
 #### Step 3 - Load
 Faire une BD -> chaque ligne correspond à un jour contenant le prix optimisé, non optimisé et le volume consommé
+
+
+#### Create PostgreSQL database
+   ```bash
+   # Connect to PostgreSQL
+   psql -U your_username -d postgres
+   
+   # Create database
+   CREATE DATABASE prices_consumption_db;
+   
+   # Exit and reconnect to new database
+   \q
+   psql -U your_username -d prices_consumption_db
+   
+   # Create tables
+   \i database_setup.sql
+   ```
