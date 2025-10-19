@@ -2,11 +2,13 @@ import requests
 import pandas as pd
 import xmltodict
 from datetime import datetime, timedelta
+import pytz
 # https://web-api.tp.entsoe.eu/api?securityToken=b21fd0b5-a6b2-45b4-add3-70bb610259c5&documentType=A44&processType=A01&in_Domain=10YFR-RTE------C&out_Domain=10YFR-RTE------C&periodStart=202301010000&periodEnd=202312310000
 # https://web-api.tp.entsoe.eu/api?securityToken=b21fd0b5-a6b2-45b4-add3-70bb610259c5documentType=A44&processType=A01&out_Domain=10YFR-RTE------C&in_Domain=10YFR-RTE------C&periodStart=202401150000&periodEnd=202401160000
 token = 'b21fd0b5-a6b2-45b4-add3-70bb610259c5'
+timezone = 'Europe/Paris'
 
-def extract_prices(periodStart, periodEnd, token):
+def extract_prices(periodStart, periodEnd, token, timezone):
     print("Fetching live prices data from ENTSO-E API...")
     in_Domain = "10YFR-RTE------C"
     out_Domain = "10YFR-RTE------C"
@@ -28,15 +30,17 @@ def extract_prices(periodStart, periodEnd, token):
         time_series = r_json['Publication_MarketDocument']['TimeSeries']
         list_of_df =[]
         for series in time_series:
-            start_date = series['Period']['timeInterval']['start']
-            dt1 = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
-            end_date = series['Period']['timeInterval']['end']
-            dt2 = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+            start_date = utc_to_local(series['Period']['timeInterval']['start'], timezone)
+            # start_date = series['Period']['timeInterval']['start']
+            # dt1 = datetime.fromisoformat(start_date.replace("Z", "+02:00"))
+            end_date = utc_to_local(series['Period']['timeInterval']['end'], timezone)
+            # end_date = series['Period']['timeInterval']['end']
+            # dt2 = datetime.fromisoformat(end_date.replace("Z", "+02:00"))
             currency = series["currency_Unit.name"]
 
             dt = pd.date_range(
-                start=dt1,
-                end=dt2 - timedelta(minutes=60),
+                start=start_date,
+                end=end_date - timedelta(minutes=60),
                 freq=f'{60}min'
                 )
             # print(dt)
@@ -77,6 +81,16 @@ def extract_prices(periodStart, periodEnd, token):
     #     print(f":coche_blanche: Extracted {len(df)} price points")
     except Exception as e:
         print(f":x: Error processing price data: {e}")
+
+def utc_to_local(utc_date_str, timezone):
+    """
+    Convertit une date UTC string ISO en datetime localisé (timezone donnée).
+    """
+    tz = pytz.timezone(timezone)
+    utc_dt = datetime.strptime(utc_date_str, '%Y-%m-%dT%H:%MZ').replace(tzinfo=pytz.utc)
+    # print(type(utc_dt.astimezone(tz)))
+    return utc_dt.astimezone(tz)
+
 
 def get_conso_in_31_jours():
     
@@ -171,7 +185,7 @@ if __name__ == "__main__":
     
     print("première fonction")
 
-    result = extract_prices("202509010000", "202510020000", token)
+    result = extract_prices("202508010000", "202509012300", token, timezone)
     # print(f"API test: {'OK' if not result.empty else 'Échec'}")
 
         
