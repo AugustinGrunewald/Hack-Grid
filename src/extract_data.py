@@ -185,7 +185,7 @@ if __name__ == "__main__":
     
     print("première fonction")
 
-    result = extract_prices("202508010000", "202509012300", token, timezone)
+    result = extract_prices("202508010000", "202509152300", token, timezone)
     # print(f"API test: {'OK' if not result.empty else 'Échec'}")
 
         
