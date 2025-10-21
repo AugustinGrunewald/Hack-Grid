@@ -2,6 +2,16 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
+def clean_spot_prices(df_prix):
+
+	
+	# Si une valeur est négative, on la considère à 0
+	df_prix['spot_price'] = df_prix['spot_price'].clip(lower=0)
+
+	# Gérer les valeurs manquantes en les mettant à 0
+	df_prix['spot_price'] = df_prix['spot_price'].fillna(0)
+	return df_prix
+
 def fusionner_prix_conso(prix_path, conso_path):
 	# Charger les CSV avec parsing des dates (on assigne le type date-time au champ)
 	df_conso = pd.read_csv(
@@ -13,6 +23,7 @@ def fusionner_prix_conso(prix_path, conso_path):
 	)	
 	
 	df_prix = pd.read_csv(prix_path, parse_dates=['time'])
+	df_prix = clean_spot_prices(df_prix)
 	df_prix["time"] = df_prix["time"].dt.tz_localize(None) #On enlève le fuseau horaire 
 	#On fait un inner join sur la colonne date
 	df = pd.merge(df_prix, df_conso, left_on='time', right_on='Time')
@@ -20,6 +31,8 @@ def fusionner_prix_conso(prix_path, conso_path):
 	df.columns = ["Date Hour", "Spot Prices (EUR)", "Consumption (W)"]
 	#On peut renvoyer le df une fois qu'on a selectionné et renommé les bonnes colonnes
 	return df
+
+
 
 if __name__ == "__main__":
 	# Exemple d'utilisation
