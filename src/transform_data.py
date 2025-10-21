@@ -3,14 +3,13 @@ import os
 import matplotlib.pyplot as plt
 
 def clean_spot_prices(df_prix):
+	# Gérer les valeurs manquantes en les mettant à la valeur précédente connue
+    df_prix['spot_price'] = df_prix['spot_price'].fillna(method='ffill')
 
 	
-	# Si une valeur est négative, on la considère à 0
-	df_prix['spot_price'] = df_prix['spot_price'].clip(lower=0)
+    # ------------------------
+    return df_prix
 
-	# Gérer les valeurs manquantes en les mettant à 0
-	df_prix['spot_price'] = df_prix['spot_price'].fillna(0)
-	return df_prix
 
 def fusionner_prix_conso(prix_path, conso_path):
 	# Charger les CSV avec parsing des dates (on assigne le type date-time au champ)
