@@ -1,23 +1,33 @@
 # Hack-Grid
-ETL project - Ce ReadMe 
 
-## Résumé de la startup
-... à compléter ...
+## Description
+Ce projet est une pipeline ETL (Extract, Transform, Load) implémentée en Python. La pipeline suit les étapes suivantes :
 
-## Description de l'ETL
-#### Step 1 - Extract
-Récupérer les données de consommation -> data d'entreprises/particuliers 
-Récupérer les prix du marchés
+- Extraction des données via ##A COMPLETER##,
+- Transforme les données pour ##A COMPLETER##
+- Load les données sur une base de données SQL puis rend compte d'une analyse et optimisation via PowerBI
 
-#### Step 2 - Transform
-Nettoyer les données
-Une transformation -> on trouve le prix de consommation sans optimisation (prix payé sur une journée)
-Mettre en place l'optimisation -> prix de la batterie, achat de l'électricité à différent moment, comparer les prix pour une même quantité consommée
+Ce projet est une démo de notre Proof-of-Concept.
 
-#### Step 3 - Load
-Faire une BD -> chaque ligne correspond à un jour contenant le prix optimisé, non optimisé et le volume consommé
-
-
+## Structure du projet
+Voici la structure des fichiers du projet:
+```bash
+demo/
+│
+├── data/                           # Data directory
+│   ├── conso_septembre_2025.csv              # Fichier temporaire pour l'extraction des données de consommation utilisateur
+│   ├── spot_prices_septembre_2025.csv              # Fichier temporaire pour l'extraction des données de prix spot
+│
+├── src/
+│   ├── extract.py                  # Code for extracting data
+│   ├── transform.py                # Code for transforming data
+│   └── load.py                     # Code for loading data
+│
+├── README.md                       # Documentation du projet
+├── requirements.txt                # Liste des dépendances Python
+└── main.py                         # Point d'entrée pour la pipeline ETL
+```
+## Setup d'installation
 #### Create PostgreSQL database
    ```bash
    # Connect to PostgreSQL
