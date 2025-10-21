@@ -44,7 +44,7 @@ def main():
     # clean_flights_data = clean_flights(flights)
     # final_airports, final_flights = combine_data(clean_airports_data, clean_flights_data)
     data_folder = os.path.join(os.path.dirname(__file__), 'data')
-    fusionned_table = fusionner_prix_conso(os.path.join(data_folder, f'SPOT_prices_{PeriodStart}_{PeriodEnd}.csv'),conso_path = os.path.join(data_folder, 'conso_september_2025.csv'))
+    fusionned_table = fusionner_prix_conso(os.path.join(data_folder, f'SPOT_prices_{PeriodStart}_{PeriodEnd}.csv'),conso_path = os.path.join(data_folder, 'conso_type.csv'))
     
     # Step 3: Load data
     print("\n=== LOADING ===")

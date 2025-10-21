@@ -85,6 +85,6 @@ if __name__ == "__main__":
 
     data_folder = os.path.join(os.path.dirname(__file__), '..', 'data')
     prix_path = os.path.join(data_folder, 'spot_prices_september_2025.csv')
-    conso_path = os.path.join(data_folder, 'conso_september_2025.csv')
+    conso_path = os.path.join(data_folder, 'conso_type.csv')
 
     # load_to_database(fusionner_prix_conso(prix_path, conso_path))

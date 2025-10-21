@@ -8,14 +8,48 @@ import pytz
 token = 'b21fd0b5-a6b2-45b4-add3-70bb610259c5'
 timezone = 'Europe/Paris'
 
+
+def extract_prices_concatenate(periodStart, periodEnd, token, timezone):
+    # Convert strings en datetime
+    start = datetime.strptime(periodStart, "%Y%m%d%H%M")
+    end   = datetime.strptime(periodEnd, "%Y%m%d%H%M")
+    
+    list_of_df = []
+    current_start = start
+    
+    while current_start < end:
+        # On peut demander au max 1 mois à la fois pour simplifier
+        # Calcul de la fin du mois ou fin de la période
+        next_month = (current_start.replace(day=1) + timedelta(days=32)).replace(day=1)
+        current_end = min(next_month, end)
+        
+        # Format ENTSO-E YYYYMMDDHHMM
+        start_str = current_start.strftime("%Y%m%d%H%M")
+        end_str   = current_end.strftime("%Y%m%d%H%M")
+        
+        # Appel à ta fonction extract_prices
+        df = extract_prices(start_str, end_str, token, timezone)
+        list_of_df.append(df)
+        
+        # Avancer au prochain intervalle
+        current_start = current_end
+    
+    # Concaténer tous les DataFrames
+    df_concat = pd.concat(list_of_df, ignore_index=False)
+    df_to_csv(df_concat,output_path="./data", start=periodStart, end=periodEnd)
+    return df_concat
+
+
+
 def extract_prices(periodStart, periodEnd, token, timezone):
     print("Fetching live prices data from ENTSO-E API...")
+    true_periodEnd = periodEnd.replace('2300','2200') # pour contourner le problème de l'API ENTSOE
     in_Domain = "10YFR-RTE------C"
     out_Domain = "10YFR-RTE------C"
     url = (
         f"https://web-api.tp.entsoe.eu/api?securityToken={token}"
         f"&documentType=A44&processType=A01"
-        f"&out_Domain={out_Domain}&in_Domain={in_Domain}&periodStart={periodStart}&periodEnd={periodEnd}"
+        f"&out_Domain={out_Domain}&in_Domain={in_Domain}&periodStart={periodStart}&periodEnd={true_periodEnd}"
     )
     try:
         response = requests.get(url=url,
@@ -43,7 +77,7 @@ def extract_prices(periodStart, periodEnd, token, timezone):
                 end=end_date - timedelta(minutes=60),
                 freq=f'{60}min'
                 )
-            # print(dt)
+            # print(dt[0],dt[len(dt)-1])    
             prices_col = [float('nan')] * len(dt)
 
             for val in series['Period']['Point']:
@@ -56,7 +90,8 @@ def extract_prices(periodStart, periodEnd, token, timezone):
             }, index=pd.Index(dt, name='time'))
             list_of_df.append(df_c)
         df_total = pd.concat(df_c for df_c in list_of_df)
-        df_to_csv(df=df_total, output_path="./data", start=periodStart, end=periodEnd)
+        return df_total
+        # df_to_csv(df=df_total, output_path="./data", start=periodStart, end=periodEnd)
     # if not isinstance(time_series, list):
     #     time_series = [time_series]
     #     for val in series['Period']['Point']:
@@ -92,77 +127,77 @@ def utc_to_local(utc_date_str, timezone):
     return utc_dt.astimezone(tz)
 
 
-def get_conso_in_31_jours():
+# def get_conso_in_31_jours():
     
-    date_end = datetime.today().date()
-    date_start = date_end - timedelta(days=31)
-    # format ISO pour la requête
-    start_str = date_start.isoformat()
-    end_str = date_end.isoformat()
+#     date_end = datetime.today().date()
+#     date_start = date_end - timedelta(days=31)
+#     # format ISO pour la requête
+#     start_str = date_start.isoformat()
+#     end_str = date_end.isoformat()
 
     
-    # URL de base de l'API
-    base_url = "https://data.enedis.fr/api/explore/v2.1/catalog/datasets/conso-inf36-region/records"
-    params = {
-        "dataset": "conso-inf36-region",
-        "where": f"date >= '{start_str}' AND date <= '{end_str}'",
-        "rows": 1000  # nombre de résultats max (à ajuster)
-    }
+#     # URL de base de l'API
+#     base_url = "https://data.enedis.fr/api/explore/v2.1/catalog/datasets/conso-inf36-region/records"
+#     params = {
+#         "dataset": "conso-inf36-region",
+#         "where": f"date >= '{start_str}' AND date <= '{end_str}'",
+#         "rows": 1000  # nombre de résultats max (à ajuster)
+#     }
     
-    try:
-        resp = requests.get(base_url, params=params)
-        resp.raise_for_status()
-        data = resp.json()
-    except requests.exceptions.HTTPError as e:
-        print(f"HTTP Error: {e}")
-        print(f"Response content: {resp.text}")
-        return None
-    except Exception as e:
-        print(f"Error fetching data: {e}")
-        return None
+#     try:
+#         resp = requests.get(base_url, params=params)
+#         resp.raise_for_status()
+#         data = resp.json()
+#     except requests.exceptions.HTTPError as e:
+#         print(f"HTTP Error: {e}")
+#         print(f"Response content: {resp.text}")
+#         return None
+#     except Exception as e:
+#         print(f"Error fetching data: {e}")
+#         return None
     
-    # extraire les valeurs de consommation dans les "records"
-    valeurs = []
-    records = data.get("records", [])
-    print(f"Found {len(records)} records")
+#     # extraire les valeurs de consommation dans les "records"
+#     valeurs = []
+#     records = data.get("records", [])
+#     print(f"Found {len(records)} records")
     
-    if not records:
-        print("No records found in API response")
-        return None
+#     if not records:
+#         print("No records found in API response")
+#         return None
     
-    # Debug: print the first record to understand the structure
-    if records:
-        print("Sample record structure:")
-        print(records[0])
+#     # Debug: print the first record to understand the structure
+#     if records:
+#         print("Sample record structure:")
+#         print(records[0])
     
-    for rec in records:
-        fields = rec.get("fields", {})
-        # Chercher différents champs possibles pour la consommation
-        consumption_fields = ["conso", "volume", "consommation", "value", "valeur"]
-        found_value = None
+#     for rec in records:
+#         fields = rec.get("fields", {})
+#         # Chercher différents champs possibles pour la consommation
+#         consumption_fields = ["conso", "volume", "consommation", "value", "valeur"]
+#         found_value = None
         
-        for field in consumption_fields:
-            if field in fields:
-                found_value = fields[field]
-                break
+#         for field in consumption_fields:
+#             if field in fields:
+#                 found_value = fields[field]
+#                 break
         
-        if found_value is not None:
-            try:
-                # Convertir en float si possible
-                valeur = float(found_value)
-                valeurs.append(valeur)
-            except (ValueError, TypeError):
-                print(f"Could not convert value to float: {found_value}")
-                continue
+#         if found_value is not None:
+#             try:
+#                 # Convertir en float si possible
+#                 valeur = float(found_value)
+#                 valeurs.append(valeur)
+#             except (ValueError, TypeError):
+#                 print(f"Could not convert value to float: {found_value}")
+#                 continue
     
-    if not valeurs:
-        print("No valid consumption values found")
-        return None
+#     if not valeurs:
+#         print("No valid consumption values found")
+#         return None
     
-    # moyenne
-    moyenne = sum(valeurs) / len(valeurs)
-    print(f"Calculated average from {len(valeurs)} values: {moyenne:.2f}")
-    return moyenne
+#     # moyenne
+#     moyenne = sum(valeurs) / len(valeurs)
+#     print(f"Calculated average from {len(valeurs)} values: {moyenne:.2f}")
+#     return moyenne
 
 def df_to_csv(df, output_path, start, end):
     """
@@ -185,7 +220,8 @@ if __name__ == "__main__":
     
     print("première fonction")
 
-    result = extract_prices("202508010000", "202509152300", token, timezone)
+    result = extract_prices_concatenate("202509100000", "202509152300", token, timezone)
+
     # print(f"API test: {'OK' if not result.empty else 'Échec'}")
 
         
