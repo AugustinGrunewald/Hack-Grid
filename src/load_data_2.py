@@ -21,15 +21,6 @@ DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME")
 
-# connection_string = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-# Database connection configuration
-# DATABASE_CONFIG = {
-#     'username': 'grunewaldaugustin',
-#     'password': '', 
-#     'host': 'localhost',
-#     'port': '5432',
-#     'database': 'prices_consumption_db'
-# }
 
 
 def get_connection_string():
