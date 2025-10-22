@@ -58,7 +58,7 @@ def load_to_database(prices_consumption_df):
         # Use pandas to_sql method to insert data
         if not prices_consumption_df.empty:
             prices_consumption_df.to_sql('prices_consumption', engine, if_exists='replace', index=False)
-            print(f"Loaded {len(prices_consumption_df)} days of data to database")
+            print(f"Loaded {len(prices_consumption_df)} hours of data to database")
          
         # Parameters explanation:
         # - 'prices&consumption': table name in database

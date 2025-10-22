@@ -10,11 +10,11 @@ This script runs the complete ETL pipeline:
 Run with: python main.py
 """
 token = 'b21fd0b5-a6b2-45b4-add3-70bb610259c5'
-PeriodStart = '202509010000'
-PeriodEnd = '202509152300'
+PeriodStart = '202412230000'
+PeriodEnd = '202508152300'
 
-from src.extract_data import extract_prices
-from src.transform_data import fusionner_prix_conso
+from src.extract_data import extract_prices_concatenate
+from src.transform_data_2 import fusionner_prix_conso
 from src.load_data_2 import load_to_database
 import os
 
@@ -29,7 +29,7 @@ def main():
     print("📥 Extracting data from sources...")
     
     # TODO: Call the extraction functions
-    prices = extract_prices(PeriodStart, PeriodEnd, token, 'Europe/Paris')
+    prices = extract_prices_concatenate(PeriodStart, PeriodEnd, token, 'Europe/Paris')
     # nous n'extrayons finalement que les prix SPOT
     
     # Uncomment the lines above once you've implemented the functions
@@ -44,7 +44,7 @@ def main():
     # clean_flights_data = clean_flights(flights)
     # final_airports, final_flights = combine_data(clean_airports_data, clean_flights_data)
     data_folder = os.path.join(os.path.dirname(__file__), 'data')
-    fusionned_table = fusionner_prix_conso(os.path.join(data_folder, f'SPOT_prices_{PeriodStart}_{PeriodEnd}.csv'),conso_path = os.path.join(data_folder, 'conso_type.csv'))
+    fusionned_table = fusionner_prix_conso(os.path.join(data_folder, f'SPOT_prices_{PeriodStart}_{PeriodEnd}.csv'),conso_path = os.path.join(data_folder, 'conso_september_2025.csv'))
     
     # Step 3: Load data
     print("\n=== LOADING ===")

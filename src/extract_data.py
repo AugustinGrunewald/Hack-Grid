@@ -3,8 +3,7 @@ import pandas as pd
 import xmltodict
 from datetime import datetime, timedelta
 import pytz
-# https://web-api.tp.entsoe.eu/api?securityToken=b21fd0b5-a6b2-45b4-add3-70bb610259c5&documentType=A44&processType=A01&in_Domain=10YFR-RTE------C&out_Domain=10YFR-RTE------C&periodStart=202301010000&periodEnd=202312310000
-# https://web-api.tp.entsoe.eu/api?securityToken=b21fd0b5-a6b2-45b4-add3-70bb610259c5documentType=A44&processType=A01&out_Domain=10YFR-RTE------C&in_Domain=10YFR-RTE------C&periodStart=202401150000&periodEnd=202401160000
+
 token = 'b21fd0b5-a6b2-45b4-add3-70bb610259c5'
 timezone = 'Europe/Paris'
 
@@ -42,7 +41,9 @@ def extract_prices_concatenate(periodStart, periodEnd, token, timezone):
 
 
 def extract_prices(periodStart, periodEnd, token, timezone):
-    print("Fetching live prices data from ENTSO-E API...")
+    start = datetime.strptime(periodStart, "%Y%m%d%H%M")
+    month = start.month
+    print(f"Fetching live prices data from ENTSO-E API for the month {month}")
     true_periodEnd = periodEnd.replace('2300','2200') # pour contourner le problème de l'API ENTSOE
     in_Domain = "10YFR-RTE------C"
     out_Domain = "10YFR-RTE------C"
@@ -220,7 +221,7 @@ if __name__ == "__main__":
     
     print("première fonction")
 
-    result = extract_prices_concatenate("202509100000", "202509152300", token, timezone)
+    result = extract_prices_concatenate("202501100000", "202509152300", token, timezone)
 
     # print(f"API test: {'OK' if not result.empty else 'Échec'}")
 
