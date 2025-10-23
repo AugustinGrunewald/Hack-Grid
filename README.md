@@ -15,9 +15,8 @@ Voici la structure des fichiers du projet:
 demo/
 │
 ├── data/                           # Data directory
-│   ├── conso_septembre_2025.csv              # Fichier temporaire pour l'extraction des données de consommation utilisateur
-│   ├── spot_prices_septembre_2025.csv              # Fichier temporaire pour l'extraction des données de prix spot
-│
+│   ├── conso_septembre_2025.csv              # Fichier de consommation d'un proche du groupe à partir duquel on génère la consommation utilisateur
+│   
 ├── src/
 │   ├── extract.py                  # Code for extracting data
 │   ├── transform.py                # Code for transforming data
