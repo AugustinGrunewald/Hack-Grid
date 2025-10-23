@@ -1,6 +1,6 @@
 -- Hackgrid Database Setup
 -- Run this script to create the necessary tables for the ETL pipeline
-
+CREATE DATABSE prices_consumption_db;
 -- Drop tables if they exist (for clean restart)
 DROP TABLE IF EXISTS prices_consumption;
 
