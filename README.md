@@ -23,6 +23,8 @@ demo/
 │   └── load.py                     # Code for loading data
 │
 ├── README.md                       # Documentation du projet
+├── .env                            # Configuration des variables d'environnement pour la base SQL
+├── .gitignore                       # Liste des fichiers que le git doit ignorer
 ├── database_setup.sql              # Fichier pour configurer la database SQL
 ├── requirements.txt                # Liste des dépendances Python
 ├── Hack-Grid.pbi                   # PowerBI démontrons l'optimisation
