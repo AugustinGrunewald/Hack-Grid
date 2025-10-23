@@ -16,7 +16,7 @@ CREATE TABLE prices_consumption (
 );
 
 -- Create indexes for better query performance
-CREATE INDEX idx_prices_consumption ON prices_consumption_db(date_actual);
+CREATE INDEX idx_prices_consumption ON prices_consumption(date_actual);
 
 -- Verify tables were created
 \dt
