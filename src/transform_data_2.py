@@ -54,36 +54,39 @@ def fusionner_prix_conso(prix_path, conso_path):
 
 def fusionner_prix_conso_df(df_prix, df_conso):
     
-    #On fait un premier traitement des prix
-    df_prix = clean_spot_prices(df_prix)
-
-    #La clé de jointure sera le jour et l'heure, mais sans le mois car on a pas la data conso
-    df_prix['JoinKey'] = df_prix['time'].dt.strftime('%d-%H')
-
-    # Gestion spéciale pour le jour 31 (remplacer par jour 30)
-    is_day_31 = df_prix['time'].dt.day == 31
-    if is_day_31.any():
-        # Remplace '31-HH' par '30-HH' pour les lignes concernées
-        df_prix.loc[is_day_31, 'JoinKey'] = df_prix['time'].dt.strftime('30-%H')
-        
-
-    # Créer une clé unique 'Jour_Heure' pour DF_CONSO
-    df_conso['JoinKey'] = df_conso['Time'].dt.strftime('%d-%H')
-    
-    
-    # Fusion des DataFrames sur la clé Jour-Heure
-    df = pd.merge(
-        df_prix, 
-        df_conso[['JoinKey', 'Consumption (W)']], # Seules les colonnes nécessaires de conso
-        on='JoinKey', 
-        how='left'
+    df_conso.rename(columns={"Time": "datetime"}, inplace=True)
+    df_conso["datetime"] = df_conso["datetime"].dt.tz_localize(
+        "Europe/Paris", ambiguous="infer", nonexistent="shift_forward"
     )
     
-    # Nettoyage final des colonnes
-    df = df[["time", "spot_price", "Consumption (W)"]]
-    df.columns = ["Date Hour", "Spot Prices (EUR)", "Consumption (W)"]
-    df = df.drop_duplicates(keep='first')
-    return df
+    # Si le nom de la colonne conso diffère (ex: "Consumption (W)" ou "conso")
+    conso_col = [c for c in df_conso.columns if "conso" in c.lower() or "consumption" in c.lower()][0]
+    df_conso.rename(columns={conso_col: "Consumption (W)"}, inplace=True)
+    
+    # Ajoute jour et heure pour la jointure
+    df_conso["day"] = df_conso["datetime"].dt.day
+    df_conso["hour"] = df_conso["datetime"].dt.hour
+
+    # --- Chargement prix ---
+    df_prix = clean_spot_prices(df_prix)
+    df_prix["day"] = df_prix["datetime"].dt.day
+    df_prix["hour"] = df_prix["datetime"].dt.hour
+
+    # --- Fusion (sur jour + heure) ---
+    df_merged = pd.merge(
+        df_prix,
+        df_conso[["day", "hour", "Consumption (W)"]],
+        on=["day", "hour"],
+        how="left"
+    )
+
+    # --- Nettoyage final ---
+    df_final = df_merged[["datetime", "spot_price", "Consumption (W)"]]
+    df_final.columns = ["Date Hour", "Spot Prices (EUR)", "Consumption (W)"]
+
+    return df_final
+
+
 
 if __name__ == "__main__":
     # Exemple d'utilisation

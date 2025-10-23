@@ -2,10 +2,10 @@
 -- Run this script to create the necessary tables for the ETL pipeline
 
 -- Drop tables if they exist (for clean restart)
-DROP TABLE IF EXISTS prices_consumption_db;
+DROP TABLE IF EXISTS prices_consumption;
 
 -- First table - consumption
-CREATE TABLE prices_consumption_db (
+CREATE TABLE prices_consumption (
     id SERIAL PRIMARY KEY,
     date_actual DATE,
     hour_actual TIME,  

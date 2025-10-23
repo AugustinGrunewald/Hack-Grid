@@ -8,7 +8,7 @@ token = 'b21fd0b5-a6b2-45b4-add3-70bb610259c5'
 timezone = 'Europe/Paris'
 
 
-def extract_prices_concatenate(periodStart, periodEnd, token, timezone):
+def extract_prices_concatenate_and_conso(periodStart, periodEnd, token, timezone, conso_path):
     # Convert strings en datetime
     start = datetime.strptime(periodStart, "%Y%m%d%H%M")
     end   = datetime.strptime(periodEnd, "%Y%m%d%H%M")
@@ -35,8 +35,16 @@ def extract_prices_concatenate(periodStart, periodEnd, token, timezone):
     
     # Concaténer tous les DataFrames
     df_concat = pd.concat(list_of_df, ignore_index=False)
-    df_to_csv(df_concat,output_path="./data", start=periodStart, end=periodEnd)
-    return df_concat
+    df_concat = df_concat.reset_index().rename(columns={'index': 'time'})
+    # print(df_concat.columns)
+    # df_to_csv(df_concat,output_path="./data", start=periodStart, end=periodEnd)
+    df_conso = pd.read_csv(
+        conso_path,
+        sep=";",
+        parse_dates=["Time"],
+        date_format="%d/%m/%Y %H:%M:%S" 
+    )
+    return (df_concat, df_conso)
 
 
 
@@ -122,6 +130,6 @@ if __name__ == "__main__":
     
     print("première fonction")
 
-    result = extract_prices_concatenate("202501100000", "202509152300", token, timezone)
+    result = extract_prices_concatenate_and_conso("202501100000", "202509152300", token, timezone, "data/conso_september_2025.csv")
 
         
