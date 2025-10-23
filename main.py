@@ -11,12 +11,11 @@ Run with: python main.py
 """
 token = 'b21fd0b5-a6b2-45b4-add3-70bb610259c5'
 PeriodStart = '202412230000'
-PeriodEnd = '202505152300'
+PeriodEnd = '202502152300'
 
 from src.extract_data import extract_prices_concatenate_and_conso
-from src.transform_data_2 import fusionner_prix_conso
-from src.transform_data_2 import fusionner_prix_conso_df
-from src.load_data_2 import load_to_database
+from src.transform_data import fusionner_prix_conso_df
+from src.load_data import load_to_database
 import os
 
 
